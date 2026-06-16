@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Coffee Chat Outreach</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<style>
+  :root {
+    --bg: #faf9f7;
+    --card: #ffffff;
+    --border: #e5e1da;
+    --border-strong: #d6d0c4;
+    --text-primary: #2b2925;
+    --text-secondary: #6b6660;
+    --text-tertiary: #9a958c;
+    --text-danger: #b3432e;
+    --text-info: #8a5a2e;
+    --bg-info: #f3ead9;
+    --bg-success: #e7efe2;
+    --text-success: #4a6b3a;
+    --bg-secondary: #f3f1ec;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  input, select, textarea, button {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--text-primary);
+  }
+  input, select, textarea {
+    padding: 8px 10px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    background: var(--card);
+    outline: none;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: #b8a888;
+  }
+  button {
+    padding: 8px 14px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-strong);
+    background: var(--card);
+    cursor: pointer;
+    font-weight: 500;
+  }
+  button:hover:not(:disabled) {
+    background: var(--bg-secondary);
+  }
+  button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  a { color: var(--text-info); }
+  h1 { font-size: 26px; font-weight: 600; }
+  h3 { font-size: 16px; font-weight: 600; }
+  p { line-height: 1.5; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spin { animation: spin 1s linear infinite; }
+  #root { padding: 2rem 1rem 4rem; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect } = React;
+
+const ICONS = {
+  'chevron-up': 'M18 15l-6-6-6 6',
+  'chevron-down': 'M6 9l6 6 6-6',
+  'plus': 'M12 5v14M5 12h14',
+  'trash-2': 'M3 6h18M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m5 0V4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2M10 11v6M14 11v6',
+  'search': 'M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM21 21l-4.35-4.35',
+  'link-2': 'M9 17H7A5 5 0 0 1 7 7h2M15 7h2a5 5 0 1 1 0 10h-2M8 12h8',
+  'mail': 'M4 4h16v16H4V4zM22 6l-10 7L2 6',
+  'coffee': 'M17 8h1a4 4 0 1 1 0 8h-1M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8zM6 1v3M10 1v3M14 1v3',
+  'copy': 'M9 9h10v10H9V9zM5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1',
+  'check': 'M20 6L9 17l-5-5',
+  'send': 'M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z',
+  'users': 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75',
+  'building-2': 'M6 22V2h12v20M6 12h12M6 7h12M6 17h12M10 22v-4M14 22v-4',
+  'loader-2': 'M21 12a9 9 0 1 1-6.219-8.56',
+};
+
+function Icon({ name, size = 16, className = '' }) {
+  const path = ICONS[name] || '';
+  return (
+    <svg
+      className={className}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0 }}
+    >
+      <path d={path} />
+    </svg>
+  );
+}
+
+const SENIORITY_OPTIONS = ['owner', 'founder', 'c_suite', 'partner', 'vp', 'head', 'director', 'manager', 'senior', 'entry', 'intern'];
+
+const TONE_OPTIONS = [
+  { id: 'warm', label: 'Warm & curious' },
+  { id: 'direct', label: 'Direct & brief' },
+  { id: 'formal', label: 'Formal' },
+];
+
+const ANGLE_OPTIONS = [
+  { id: 'career', label: 'Career advice / mentorship' },
+  { id: 'industry', label: 'Industry insights' },
+  { id: 'shared', label: 'Shared background / interest' },
+  { id: 'opportunity', label: 'Potential collaboration' },
+];
+
+const STORAGE_KEY = 'coffee_chat_outreach_state_v1';
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch (e) {
+    return null;
+  }
+}
+
+function saveState(state) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {
+    console.error('Failed to save state', e);
+  }
+}
+
+function buildDraft({ name, firstName, company, role, industry, angle, tone, yourName, yourBackground, customNote }) {
+  const greeting = `Hi ${firstName || name || 'there'},`;
+
+  const intro = {
+    career: `I came across your profile and was really impressed by your path${role ? ` as ${role}` : ''}${company ? ` at ${company}` : ''}.`,
+    industry: `I've been following the ${industry || 'industry'} space closely and your perspective${company ? ` from your work at ${company}` : ''} really stood out to me.`,
+    shared: `I noticed we have some overlapping interests${industry ? ` in ${industry}` : ''}, and I'd love to connect.`,
+    opportunity: `I've been exploring ideas in ${industry || 'this space'} and think there could be some interesting overlap with what you're working on${company ? ` at ${company}` : ''}.`,
+  }[angle];
+
+  const ask = {
+    warm: `I'd love to grab a virtual coffee sometime in the next couple of weeks if you're open to it — no agenda beyond hearing more about your experience and sharing a bit about mine.`,
+    direct: `Would you be open to a 20-minute coffee chat in the next week or two? Happy to work around your schedule.`,
+    formal: `I would greatly appreciate the opportunity to schedule a brief 20-30 minute conversation at your convenience, either virtually or in person, to learn more about your experience.`,
+  }[tone];
+
+  const closing = {
+    warm: `Either way, thanks for reading — and congrats on the work you're doing${company ? ` at ${company}` : ''}!`,
+    direct: `Let me know what works, or feel free to point me to someone else on your team if that's more useful.`,
+    formal: `Thank you very much for considering, and I look forward to hearing from you.`,
+  }[tone];
+
+  const signOff = tone === 'formal' ? 'Best regards,' : tone === 'direct' ? 'Best,' : 'Thanks so much,';
+
+  const body = `${greeting}\n\n${intro}${yourBackground ? ` ${yourBackground}` : ''}\n\n${ask}${customNote ? `\n\n${customNote}` : ''}\n\n${closing}\n\n${signOff}\n${yourName || '[Your name]'}`;
+
+  const subject = tone === 'formal'
+    ? `Request for a brief conversation${company ? ` — ${company}` : ''}`
+    : `Quick coffee chat?${company ? ` (re: ${company})` : ''}`;
+
+  return { subject, body };
+}
+
+const labelStyle = { fontSize: 13, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 };
+const cardStyle = { background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '1rem 1.25rem', marginBottom: '1rem' };
+
+function ContactForm({ onAdd }) {
+  const [name, setName] = useState('');
+  const [company, setCompany] = useState('');
+  const [role, setRole] = useState('');
+  const [industry, setIndustry] = useState('');
+  const [linkedin, setLinkedin] = useState('');
+  const [email, setEmail] = useState('');
+  const [open, setOpen] = useState(true);
+
+  const handleAdd = () => {
+    if (!name.trim()) return;
+    onAdd({
+      id: Date.now().toString(),
+      name: name.trim(),
+      company: company.trim(),
+      role: role.trim(),
+      industry: industry.trim(),
+      linkedin: linkedin.trim(),
+      email: email.trim(),
+      status: email.trim() ? 'ready' : 'needs-email',
+      draft: null,
+    });
+    setName(''); setCompany(''); setRole(''); setIndustry(''); setLinkedin(''); setEmail('');
+  };
+
+  return (
+    <div style={cardStyle}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }} onClick={() => setOpen(!open)}>
+        <h3 style={{ margin: 0 }}>Add a contact</h3>
+        <Icon name={open ? 'chevron-up' : 'chevron-down'} size={18} />
+      </div>
+      {open && (
+        <div style={{ marginTop: '1rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
+          <div>
+            <label style={labelStyle}>Name *</label>
+            <input value={name} onChange={e => setName(e.target.value)} placeholder="Jane Doe" style={{ width: '100%' }} />
+          </div>
+          <div>
+            <label style={labelStyle}>Company</label>
+            <input value={company} onChange={e => setCompany(e.target.value)} placeholder="Acme Corp" style={{ width: '100%' }} />
+          </div>
+          <div>
+            <label style={labelStyle}>Role</label>
+            <input value={role} onChange={e => setRole(e.target.value)} placeholder="Product Manager" style={{ width: '100%' }} />
+          </div>
+          <div>
+            <label style={labelStyle}>Industry</label>
+            <input value={industry} onChange={e => setIndustry(e.target.value)} placeholder="Fintech" style={{ width: '100%' }} />
+          </div>
+          <div>
+            <label style={labelStyle}>LinkedIn URL</label>
+            <input value={linkedin} onChange={e => setLinkedin(e.target.value)} placeholder="linkedin.com/in/janedoe" style={{ width: '100%' }} />
+          </div>
+          <div>
+            <label style={labelStyle}>Email (from Apollo, optional)</label>
+            <input value={email} onChange={e => setEmail(e.target.value)} placeholder="jane@acme.com" style={{ width: '100%' }} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+            <button onClick={handleAdd} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+              <Icon name="plus" size={16} /> Add contact
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ApolloLookup({ contact, apiKey, onEmailFound }) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const lookup = async () => {
+    if (!apiKey.trim()) {
+      setError('Add your Apollo.io API key in the settings panel above first.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const nameParts = contact.name.trim().split(' ');
+      const first_name = nameParts[0];
+      const last_name = nameParts.slice(1).join(' ') || undefined;
+
+      const res = await fetch('https://api.apollo.io/v1/people/match', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+          'X-Api-Key': apiKey.trim(),
+        },
+        body: JSON.stringify({
+          first_name,
+          last_name,
+          organization_name: contact.company || undefined,
+          reveal_personal_emails: false,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Apollo API error (${res.status}). Check your API key and plan permissions.`);
+      }
+      const data = await res.json();
+      const foundEmail = data?.person?.email;
+      if (foundEmail && foundEmail !== 'email_not_unlocked@domain.com') {
+        onEmailFound(contact.id, foundEmail);
+      } else {
+        setError('No email found for this person on Apollo.');
+      }
+    } catch (e) {
+      setError(e.message || "Lookup failed. Apollo may block requests from the browser (CORS) — if so, use Apollo's UI directly.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ marginTop: 8, padding: '0.75rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)' }}>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+        <button onClick={lookup} disabled={loading} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Icon name={loading ? 'loader-2' : 'search'} size={14} className={loading ? 'spin' : ''} /> {loading ? 'Looking up...' : 'Find email via Apollo'}
+        </button>
+      </div>
+      {error && <p style={{ fontSize: 13, color: 'var(--text-danger)', marginTop: 6, marginBottom: 0 }}>{error}</p>}
+      <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 6, marginBottom: 0 }}>
+        Apollo's API may reject direct browser calls due to CORS. If lookup fails, search the name on Apollo.io and paste the email manually above.
+      </p>
+    </div>
+  );
+}
+
+function DraftPanel({ contact, settings, onSaveDraft }) {
+  const nameParts = contact.name.trim().split(' ');
+  const firstName = nameParts[0];
+
+  const generated = buildDraft({
+    name: contact.name, firstName, company: contact.company, role: contact.role, industry: contact.industry,
+    angle: settings.angle, tone: settings.tone, yourName: settings.yourName, yourBackground: settings.yourBackground, customNote: settings.customNote,
+  });
+
+  const [subject, setSubject] = useState(contact.draft?.subject ?? generated.subject);
+  const [body, setBody] = useState(contact.draft?.body ?? generated.body);
+  const [copied, setCopied] = useState(false);
+
+  const regenerate = () => {
+    const fresh = buildDraft({
+      name: contact.name, firstName, company: contact.company, role: contact.role, industry: contact.industry,
+      angle: settings.angle, tone: settings.tone, yourName: settings.yourName, yourBackground: settings.yourBackground, customNote: settings.customNote,
+    });
+    setSubject(fresh.subject);
+    setBody(fresh.body);
+  };
+
+  const mailtoHref = `mailto:${encodeURIComponent(contact.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+  const copyAll = () => {
+    navigator.clipboard.writeText(`Subject: ${subject}\n\n${body}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  return (
+    <div style={{ marginTop: 12, borderTop: '1px solid var(--border)', paddingTop: 12 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+        <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Subject</span>
+        <button onClick={regenerate} style={{ fontSize: 13, padding: '4px 10px' }}>Regenerate</button>
+      </div>
+      <input value={subject} onChange={e => setSubject(e.target.value)} style={{ width: '100%', marginBottom: 8 }} />
+      <textarea
+        value={body}
+        onChange={e => setBody(e.target.value)}
+        rows={10}
+        style={{ width: '100%', resize: 'vertical', fontSize: 14, lineHeight: 1.7, padding: '0.5rem' }}
+      />
+      <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+        <button onClick={copyAll} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Icon name={copied ? 'check' : 'copy'} size={14} /> {copied ? 'Copied' : 'Copy draft'}
+        </button>
+        {contact.email ? (
+          <a href={mailtoHref} onClick={() => onSaveDraft(contact.id, { subject, body, sent: true })}
+             style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-md)', textDecoration: 'none', fontSize: 14 }}>
+            <Icon name="send" size={14} /> Open in email client
+          </a>
+        ) : (
+          <span style={{ fontSize: 13, color: 'var(--text-tertiary)', alignSelf: 'center' }}>Add an email address to send</span>
+        )}
+        <button onClick={() => onSaveDraft(contact.id, { subject, body, sent: false })} style={{ fontSize: 14 }}>
+          Save draft
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ContactCard({ contact, settings, apiKey, onRemove, onEmailFound, onSaveDraft }) {
+  const [expanded, setExpanded] = useState(false);
+  const [showApollo, setShowApollo] = useState(false);
+
+  const initials = contact.name.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase();
+
+  return (
+    <div style={{ ...cardStyle, marginBottom: '0.75rem' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+        <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--bg-info)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 500, fontSize: 14, color: 'var(--text-info)', flexShrink: 0 }}>
+          {initials}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+            <div>
+              <p style={{ fontWeight: 500, fontSize: 15, margin: 0 }}>{contact.name}</p>
+              <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
+                {[contact.role, contact.company].filter(Boolean).join(' at ')}
+                {contact.industry ? ` · ${contact.industry}` : ''}
+              </p>
+            </div>
+            <button onClick={() => onRemove(contact.id)} aria-label="Remove contact" style={{ padding: '6px 8px', flexShrink: 0 }}>
+              <Icon name="trash-2" size={14} />
+            </button>
+          </div>
+
+          <div style={{ display: 'flex', gap: 12, marginTop: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            {contact.linkedin && (
+              <a href={contact.linkedin.startsWith('http') ? contact.linkedin : `https://${contact.linkedin}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 4, textDecoration: 'none' }}>
+                <Icon name="link-2" size={13} /> LinkedIn
+              </a>
+            )}
+            {contact.email ? (
+              <span style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-secondary)' }}>
+                <Icon name="mail" size={13} /> {contact.email}
+              </span>
+            ) : (
+              <button onClick={() => setShowApollo(!showApollo)} style={{ fontSize: 13, padding: '4px 10px', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <Icon name="search" size={13} /> Find email via Apollo
+              </button>
+            )}
+            {contact.draft?.sent && (
+              <span style={{ fontSize: 12, padding: '2px 8px', borderRadius: 'var(--radius-md)', background: 'var(--bg-success)', color: 'var(--text-success)' }}>
+                Sent
+              </span>
+            )}
+          </div>
+
+          {showApollo && !contact.email && (
+            <ApolloLookup contact={contact} apiKey={apiKey} onEmailFound={(id, email) => { onEmailFound(id, email); setShowApollo(false); }} />
+          )}
+
+          <button onClick={() => setExpanded(!expanded)} style={{ marginTop: 8, fontSize: 13, padding: '4px 10px', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Icon name="coffee" size={13} /> {expanded ? 'Hide email draft' : 'Draft coffee chat email'}
+            <Icon name={expanded ? 'chevron-up' : 'chevron-down'} size={14} />
+          </button>
+
+          {expanded && <DraftPanel contact={contact} settings={settings} onSaveDraft={onSaveDraft} />}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProspectSearch({ apiKey, onAddContact, existingIds }) {
+  const [title, setTitle] = useState('');
+  const [industryKeyword, setIndustryKeyword] = useState('');
+  const [location, setLocation] = useState('');
+  const [seniority, setSeniority] = useState('');
+  const [results, setResults] = useState(null);
+  const [totalEntries, setTotalEntries] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [enrichingId, setEnrichingId] = useState(null);
+  const [open, setOpen] = useState(false);
+
+  const search = async () => {
+    if (!apiKey.trim()) {
+      setError('Add your Apollo.io master API key in settings above first.');
+      return;
+    }
+    if (!title.trim() && !industryKeyword.trim() && !location.trim()) {
+      setError('Add at least a job title, keyword, or location to search.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    setResults(null);
+    try {
+      const params = new URLSearchParams();
+      if (title.trim()) params.append('person_titles[]', title.trim());
+      if (location.trim()) params.append('person_locations[]', location.trim());
+      if (seniority) params.append('person_seniorities[]', seniority);
+      if (industryKeyword.trim()) params.append('q_keywords', industryKeyword.trim());
+      params.append('per_page', '10');
+      params.append('page', '1');
+
+      const res = await fetch(`https://api.apollo.io/api/v1/mixed_people/api_search?${params.toString()}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+          'X-Api-Key': apiKey.trim(),
+        },
+      });
+
+      if (!res.ok) {
+        if (res.status === 403) throw new Error('Apollo returned 403 — this endpoint requires a master API key (Settings → Integrations → API in Apollo).');
+        throw new Error(`Apollo API error (${res.status}).`);
+      }
+      const data = await res.json();
+      setResults(data?.people || []);
+      setTotalEntries(data?.total_entries ?? null);
+    } catch (e) {
+      setError(e.message || 'Search failed. Apollo may block direct browser requests (CORS).');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const enrichAndAdd = async (person) => {
+    setEnrichingId(person.id);
+    setError('');
+    try {
+      const res = await fetch('https://api.apollo.io/v1/people/match', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+          'X-Api-Key': apiKey.trim(),
+        },
+        body: JSON.stringify({ id: person.id, reveal_personal_emails: false }),
+      });
+      if (!res.ok) throw new Error(`Enrichment failed (${res.status}). This step consumes Apollo credits.`);
+      const data = await res.json();
+      const p = data?.person || {};
+      const email = p.email && p.email !== 'email_not_unlocked@domain.com' ? p.email : '';
+
+      onAddContact({
+        id: person.id,
+        name: [p.first_name || person.first_name, p.last_name || ''].filter(Boolean).join(' '),
+        company: p.organization?.name || person.organization?.name || '',
+        role: p.title || person.title || '',
+        industry: p.organization?.industry || '',
+        linkedin: p.linkedin_url || '',
+        email,
+        status: email ? 'ready' : 'needs-email',
+        draft: null,
+      });
+    } catch (e) {
+      setError(e.message || 'Enrichment failed.');
+    } finally {
+      setEnrichingId(null);
+    }
+  };
+
+  return (
+    <div style={cardStyle}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }} onClick={() => setOpen(!open)}>
+        <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}><Icon name="users" size={18} /> Search by industry, title, or location</h3>
+        <Icon name={open ? 'chevron-up' : 'chevron-down'} size={18} />
+      </div>
+      {open && (
+        <div style={{ marginTop: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.75rem', marginBottom: '0.75rem' }}>
+            <div>
+              <label style={labelStyle}>Job title</label>
+              <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Product Manager" style={{ width: '100%' }} />
+            </div>
+            <div>
+              <label style={labelStyle}>Industry / keyword</label>
+              <input value={industryKeyword} onChange={e => setIndustryKeyword(e.target.value)} placeholder="fintech" style={{ width: '100%' }} />
+            </div>
+            <div>
+              <label style={labelStyle}>Location</label>
+              <input value={location} onChange={e => setLocation(e.target.value)} placeholder="San Francisco" style={{ width: '100%' }} />
+            </div>
+            <div>
+              <label style={labelStyle}>Seniority</label>
+              <select value={seniority} onChange={e => setSeniority(e.target.value)} style={{ width: '100%' }}>
+                <option value="">Any</option>
+                {SENIORITY_OPTIONS.map(s => <option key={s} value={s}>{s.replace('_', ' ')}</option>)}
+              </select>
+            </div>
+          </div>
+          <button onClick={search} disabled={loading} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Icon name={loading ? 'loader-2' : 'search'} size={14} className={loading ? 'spin' : ''} /> {loading ? 'Searching...' : 'Search Apollo'}
+          </button>
+
+          {error && <p style={{ fontSize: 13, color: 'var(--text-danger)', marginTop: 8 }}>{error}</p>}
+
+          {results !== null && (
+            <div style={{ marginTop: 12 }}>
+              {totalEntries !== null && (
+                <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8 }}>
+                  {totalEntries.toLocaleString()} total matches — showing {results.length}
+                </p>
+              )}
+              {results.length === 0 ? (
+                <p style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>No results. Try broadening your filters.</p>
+              ) : (
+                results.map(person => {
+                  const alreadyAdded = existingIds.has(person.id);
+                  return (
+                    <div key={person.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: '1px solid var(--border)', gap: 8 }}>
+                      <div style={{ minWidth: 0 }}>
+                        <p style={{ margin: 0, fontSize: 14, fontWeight: 500 }}>{person.first_name} {person.last_name_obfuscated}</p>
+                        <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                          {person.title && <span>{person.title}</span>}
+                          {person.organization?.name && <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Icon name="building-2" size={12} />{person.organization.name}</span>}
+                        </p>
+                      </div>
+                      <button onClick={() => enrichAndAdd(person)} disabled={alreadyAdded || enrichingId === person.id} style={{ fontSize: 13, padding: '4px 10px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <Icon name={alreadyAdded ? 'check' : enrichingId === person.id ? 'loader-2' : 'plus'} size={13} className={enrichingId === person.id ? 'spin' : ''} />
+                        {alreadyAdded ? 'Added' : enrichingId === person.id ? 'Adding...' : 'Reveal & add'}
+                      </button>
+                    </div>
+                  );
+                })
+              )}
+              <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 8 }}>
+                Search itself is free. "Reveal & add" calls Apollo's enrichment endpoint and uses credits.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CoffeeChatOutreach() {
+  const persisted = loadState();
+  const [contacts, setContacts] = useState(persisted?.contacts || []);
+  const [settings, setSettings] = useState(persisted?.settings || {
+    yourName: '', yourBackground: '', angle: 'industry', tone: 'warm', customNote: '', apolloApiKey: '',
+  });
+  const [settingsOpen, setSettingsOpen] = useState(true);
+  const [showKey, setShowKey] = useState(false);
+  const [savedFlash, setSavedFlash] = useState(false);
+
+  useEffect(() => {
+    saveState({ contacts, settings });
+    setSavedFlash(true);
+    const t = setTimeout(() => setSavedFlash(false), 800);
+    return () => clearTimeout(t);
+  }, [contacts, settings]);
+
+  const addContact = (c) => setContacts(prev => prev.some(p => p.id === c.id) ? prev : [c, ...prev]);
+  const removeContact = (id) => setContacts(prev => prev.filter(c => c.id !== id));
+  const setEmail = (id, email) => setContacts(prev => prev.map(c => c.id === id ? { ...c, email, status: 'ready' } : c));
+  const saveDraft = (id, draft) => setContacts(prev => prev.map(c => c.id === id ? { ...c, draft } : c));
+  const existingIds = new Set(contacts.map(c => c.id));
+
+  const clearAllData = () => {
+    if (window.confirm('Clear all saved contacts and settings from this browser? This cannot be undone.')) {
+      localStorage.removeItem(STORAGE_KEY);
+      setContacts([]);
+      setSettings({ yourName: '', yourBackground: '', angle: 'industry', tone: 'warm', customNote: '', apolloApiKey: '' });
+    }
+  };
+
+  return (
+    <div style={{ maxWidth: 720, margin: '0 auto' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <h1 style={{ marginBottom: 4 }}>Coffee chat outreach</h1>
+          <p style={{ color: 'var(--text-secondary)', marginTop: 0, marginBottom: '1.5rem' }}>
+            Add people from LinkedIn or Apollo search, find their email, and generate a personal outreach email.
+          </p>
+        </div>
+        <span style={{ fontSize: 12, color: 'var(--text-tertiary)', whiteSpace: 'nowrap', opacity: savedFlash ? 1 : 0, transition: 'opacity 0.3s' }}>Saved ✓</span>
+      </div>
+
+      <div style={cardStyle}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }} onClick={() => setSettingsOpen(!settingsOpen)}>
+          <h3 style={{ margin: 0 }}>Settings</h3>
+          <Icon name={settingsOpen ? 'chevron-up' : 'chevron-down'} size={18} />
+        </div>
+        {settingsOpen && (
+          <div style={{ marginTop: '1rem', display: 'grid', gap: '0.75rem' }}>
+            <div>
+              <label style={labelStyle}>Apollo.io API key (master key, for search + enrichment)</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input
+                  type={showKey ? 'text' : 'password'}
+                  value={settings.apolloApiKey}
+                  onChange={e => setSettings(s => ({ ...s, apolloApiKey: e.target.value }))}
+                  placeholder="Paste your Apollo API key"
+                  style={{ flex: 1 }}
+                />
+                <button onClick={() => setShowKey(!showKey)} style={{ padding: '0 10px' }}>{showKey ? 'Hide' : 'Show'}</button>
+              </div>
+              <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 4, marginBottom: 0 }}>
+                From Apollo: Settings → Integrations → API. The prospecting search below requires a master key. Stored only in this browser's local storage.
+              </p>
+            </div>
+            <div>
+              <label style={labelStyle}>Your name (used in sign-off)</label>
+              <input value={settings.yourName} onChange={e => setSettings(s => ({ ...s, yourName: e.target.value }))} placeholder="Alex Chen" style={{ width: '100%' }} />
+            </div>
+            <div>
+              <label style={labelStyle}>One line about you (optional, inserted into the intro)</label>
+              <input value={settings.yourBackground} onChange={e => setSettings(s => ({ ...s, yourBackground: e.target.value }))} placeholder="I'm a software engineer transitioning into product management." style={{ width: '100%' }} />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem' }}>
+              <div>
+                <label style={labelStyle}>Reason for reaching out</label>
+                <select value={settings.angle} onChange={e => setSettings(s => ({ ...s, angle: e.target.value }))} style={{ width: '100%' }}>
+                  {ANGLE_OPTIONS.map(a => <option key={a.id} value={a.id}>{a.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={labelStyle}>Tone</label>
+                <select value={settings.tone} onChange={e => setSettings(s => ({ ...s, tone: e.target.value }))} style={{ width: '100%' }}>
+                  {TONE_OPTIONS.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
+                </select>
+              </div>
+            </div>
+            <div>
+              <label style={labelStyle}>Extra note to include (optional)</label>
+              <input value={settings.customNote} onChange={e => setSettings(s => ({ ...s, customNote: e.target.value }))} placeholder="I'll be in the Bay Area next month if useful for an in-person chat." style={{ width: '100%' }} />
+            </div>
+          </div>
+        )}
+      </div>
+
+      <ProspectSearch apiKey={settings.apolloApiKey} onAddContact={addContact} existingIds={existingIds} />
+
+      <ContactForm onAdd={addContact} />
+
+      {contacts.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-tertiary)', fontSize: 14 }}>
+          No contacts yet. Search above or add someone manually.
+        </div>
+      ) : (
+        contacts.map(c => (
+          <ContactCard key={c.id} contact={c} settings={settings} apiKey={settings.apolloApiKey} onRemove={removeContact} onEmailFound={setEmail} onSaveDraft={saveDraft} />
+        ))
+      )}
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem' }}>
+        <p style={{ fontSize: 12, color: 'var(--text-tertiary)', margin: 0, flex: 1 }}>
+          Everything here is saved only in this browser (local storage on this device) — nothing is uploaded anywhere. Emails open in your default mail client for you to review and send; nothing is sent automatically. Apollo search is free; revealing an email uses credits and requires a master API key. Apollo may block direct browser requests (CORS) — if so, search/copy emails from Apollo's site instead.
+        </p>
+      </div>
+      <button onClick={clearAllData} style={{ marginTop: 12, fontSize: 12, padding: '4px 10px', color: 'var(--text-danger)' }}>
+        Clear all saved data
+      </button>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<CoffeeChatOutreach />);
+</script>
+</body>
+</html>
